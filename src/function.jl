@@ -20,10 +20,10 @@ function createCourse(term::Union{Integer,String}, code::String, name::String, s
     course = Course(term, code, name, section)
     course_with_id = db_course(course)
     students = get_course_students(course_with_id.id)
-    CourseWithStudents(course_with_id.id, course, students)
+    Course(course_with_id, students)
 end
 
-function addStudents(c::Course, file_path::String, args...; fields::Dict{Symbol,Any}=Dict(:id => "id", :name => "name", :email => "email"), kwargs...)
+function addStudents(c::Course, file_path::String, args...; fields::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:id => "id", :name => "name", :email => "email"), kwargs...)
     dfile = readdata(file_path, args...; kwargs...)
     df = dfile.data |> dropmissing
     ids = if isa(fields[:id], Tuple)
@@ -44,57 +44,85 @@ function addStudents(c::Course, file_path::String, args...; fields::Dict{Symbol,
     end
     course_with_id = db_course(c)
     students = map(i -> Student(ids[i], names[i], emails[i]), 1:length(ids))
-    course_students = save_students(students, course_with_id)
+    course = Course(course_with_id, students)
+    course_students = save_students(course)
 
-    CourseWithStudents(course_with_id.id, c, course_students)
+    Course(course, course_students)
+end
+function ids(c::Course)
+    students = c.students
+    if length(students) > 0
+        map(x -> x.id, students)
+    else
+        []
+    end
+end
+
+function names(c::Course)
+    students = c.students
+    if length(students) > 0
+        map(x -> x.name, students)
+    else
+        []
+    end
+end
+
+function emails(c::Course)
+    students = c.students
+    if length(students) > 0
+        map(x -> x.email, students)
+    else
+        []
+    end
+end
+
+function addGrades(c::Course, file_path::String, args...;
+    fields::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:sid => "sid", :name => "name", :value => "value", :max_value => "max_value"), kwargs...)
+    dfile = readdata(file_path, args...; kwargs...)
+    df = dfile.data |> dropmissing
+    gids = if isa(fields[:sid], Tuple)
+        tids = map(x -> isa(x, Int) ? x : parse(Int, x), df[!, fields[:sid][1]])
+        map(fields[:sid][2], tids)
+    else
+        map(x -> isa(x, Int) ? x : parse(Int, x), df[!, fields[:sid]])
+    end
+    names = if isa(fields[:name], Tuple)
+        fields[:name][2].(df[!, fields[:name][1]])
+    else
+        df[!, fields[:name]]
+    end
+    values = if isa(fields[:value], Tuple)
+        fields[:value][2].(df[!, fields[:value][1]])
+    else
+        df[!, fields[:value]]
+    end
+    max_values = if isa(fields[:max_value], Tuple)
+        fields[:max_value][2].(df[!, fields[:max_value][1]])
+    else
+        df[!, fields[:max_value]]
+    end
+
+    course_with_id = db_course(c)
+    students = get_course_students(course_with_id.id)
+    course = Course(course_with_id, students)
+    students_ids = ids(course)
+    grades = map(i -> Grade(gids[i], course_with_id.id, names[i], values[i], max_values[i]), 1:length(gids))
+    filtered_grades = filter(x -> x.student_id in students_ids, grades)
+    if length(grades) > length(filtered_grades)
+        @warn "Some grades cannot be saved. No corresponding students. Maybe you need to add the missing students first."
+    end
+    add_student_grades(grades)
+
+    Course(course, students)
+end
+
+function getGrades(c::Course)
+    if c.id == "new"
+        nothing
+    else
+        get_course_grades(c)
+    end
 end
 
 
-# Course(name::String, term::String, section::String, students_file::String, args...; mapping::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:id => "id", :name => "name", :email => "email"), kwargs...) = begin
-#     dfile = readdata(students_file, args...; kwargs...)
-#     df = dfile.data
-#     df = dropmissing(df)
-#     ids = isa(mapping[:name], Tuple) ? map(x -> isa(x, Int) ? x : parse(Int, x), df[!, mapping[:id][1]]) : map(x -> isa(x, Int) ? x : parse(Int, x), df[!, mapping[:id]])
-#     names = isa(mapping[:name], Tuple) ? mapping[:name][2].(df[!, mapping[:name][1]]) : df[!, mapping[:name]]
-#     emails = isa(mapping[:email], Tuple) ? mapping[:email][2].(df[!, mapping[:email][1]]) : df[!, mapping[:email]]
-#     students_df = DataFrame(id=ids, name=names, email=emails)
-#     course_students = save_students(students_df, name, term, section)
-#     course_Students = map(r -> Student(r[:id], r[:name], r[:email]), eachrow(course_students))
-#     Course(name, term, section, course_Students)
-# end
-# Course(name::String, term::String, section::String) = begin
-#     course_df = get_course(name, term, section)
-#     course_students = get_course_students(course_df[!, :id][1])
-#     course_Students = map(r -> Student(r[:id], r[:name], r[:email]), eachrow(course_students))
-#     Course(name, term, section, course_Students)
-# end
-# Student(id::Int) = begin
-#     student_df = get_student(id)
-#     @assert nrow(student_df) > 0 "No student with id. Please check the student id"
-#     Student(id, student_df[!, :name][1], student_df[!, :email][1])
-# end
-
-
-
-# Grade(course_name::String, term::String, section::String, grade_name::String, file_name::String, args...; mapping::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:student_id => "id", :value => "value", :max_value => "max_value"), kwargs...) = begin
-#     course_id = get_course(course_name, term, section)
-#     dfile = readdata(file_name, args...; kwargs...)
-#     df = dropmissing(dfile.data)
-#     trans_fns = Dict(map(x -> x => isa(mapping[x], Tuple) ? mapping[x][2] : x -> x, [:student_id, :value, :max_value]))
-#     ids = isa(mapping[:student_id], Tuple) ? df[!, mapping[:student_id][1]] : df[!, mapping[:student_id]]
-#     ids = map(x -> isa(x, Int) ? x : parse(Int, x), ids)
-#     ids = trans_fns[:student_id].(ids)
-#     values = isa(mapping[:value], Tuple) ? df[!, mapping[:value][1]] : df[!, mapping[:value]]
-#     values = map(x -> isa(x, AbstractFloat) ? x : parse(Float64, x), values)
-#     values = trans_fns[:value].(values)
-#     max_values = isa(mapping[:max_value], Tuple) ? df[!, mapping[:max_value][1]] : df[!, mapping[:max_value]]
-#     max_values = map(x -> isa(x, AbstractFloat) ? x : parse(Float64, x), max_values)
-#     max_values = trans_fns[:max_value].(max_values)
-#     grades = map(i -> Grade(ids[i], course_id[!, :id][1], grade_name, values[i], max_values[i]), 1:length(ids))
-#     add_student_grades(grades)
-#     db_scores = get_scores(grade_name)
-#     println(db_scores)
-#     grades
-# end
-
-export readdata, createCourse, addStudents
+export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades

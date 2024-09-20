@@ -4,21 +4,43 @@ function db_course(c::Course)
     DBInterface.execute(db, "insert or ignore into courses (term,code,name,section) values (?,?,?,?)", [c.term, c.code, c.name, c.section])
     df = DBInterface.execute(db, "select * from courses where term=? and code=? and name=? and section=?", [c.term, c.code, c.name, c.section]) |> DataFrame
     SQLite.close(db)
-    CourseWithID(df[!, :id][1], c)
+    Course(c, df[!, :id][1])
 end
 
 
-
-function save_students(students::Vector{Student}, course::CourseWithID)
-    add_students(students)
-    add_student_courses(students, course)
-    get_course_students(course.id)
+function add_students(students::Vector{Student})
+    db = getdb()
+    values = join(map(x -> "($(x.id),'$(x.name)','$(x.email)')", students), ",")
+    DBInterface.execute(db, "insert or ignore into students (id,name,email) values $values")
+    SQLite.close(db)
+    students
 end
 
-function reset_db()
-    db = getdb(true)
+function add_student_courses(c::Course)
+    students = c.students
+    values = join(map(x -> "($(x.id),$(c.id))", students), ",")
+    db = getdb()
+    sql = "insert or ignore into student_courses (student_id,course_id) values $values;"
+    DBInterface.execute(db, sql)
+    SQLite.close(db)
+    students
+end
+
+function add_student_grades(gs::Vector{Grade})
+    values = join(map(x -> "($(x.student_id),$(x.course_id),'$(x.name)',$(x.value),$(x.max_value))", gs), ",")
+    db = getdb()
+    sql = "insert or ignore into student_grades (student_id,course_id,grade_name,grade_value,grade_max) values $values;"
+    DBInterface.execute(db, sql)
     SQLite.close(db)
 end
+
+function save_students(c::Course)
+    students = c.students
+    add_students(students)
+    add_student_courses(c)
+    get_course_students(c.id)
+end
+
 
 function get_student(id::Int)
     db = getdb()
@@ -44,90 +66,26 @@ function get_course_students(course_id::Int)
     map(x -> Student(x[:id], x[:name], x[:email]), eachrow(df))
 end
 
-
-
-
-function add_students(students::Vector{Student})
+function get_course_grades(c::Course)
     db = getdb()
-    values = join(map(x -> "($(x.id),'$(x.name)','$(x.email)')", students), ",")
-    DBInterface.execute(db, "insert or ignore into students (id,name,email) values $values")
+    sql = """
+        select 
+            * 
+        from 
+            student_grades
+        where 
+            course_id=?
+    """
+    df = DBInterface.execute(db, sql, [c.id]) |> DataFrame
     SQLite.close(db)
-    students
-end
-
-function add_student_courses(students::Vector{Student}, c::CourseWithID)
-    values = join(map(x -> "($(x.id),$(c.id))", students), ",")
-    db = getdb()
-    sql = "insert or ignore into student_courses (student_id,course_id) values $values;"
-    DBInterface.execute(db, sql)
-    SQLite.close(db)
-    students
-end
-
-function add_student_grades(student_grades::Vector{Grade})
-    values = join(map(x -> "($(x.student_id),$(x.course_id),'$(x.name)',$(x.value),$(x.max_value))", student_grades), ",")
-    db = getdb()
-    sql = "insert or ignore into student_grades (student_id,course_id,grade_name,grade_value,grade_max) values $values;"
-    println(sql)
-    DBInterface.execute(db, sql)
-    SQLite.close(db)
-end
-
-function add_course(course::String, term::String, section::String)
-    db = getdb()
-    DBInterface.execute(db, "insert or ignore into courses (course,term,section) values (?,?,?)", [course, term, section])
-    sql_statemnt = "select * from courses where term='$term' and course='$course' and section='$section';"
-    df = DBInterface.execute(db, sql_statemnt) |> DataFrame
-    SQLite.close(db)
-    df
-end
-# function load_students()
-#     db = getdb()
-#     df = DBInterface.execute(db, "select * from students;") |> DataFrame
-#     SQLite.close(db)
-#     df
-# end
-
-# function load_students(file_name::String; new_course::Bool=false)
-#     new_course == true && @assert isfile(file_name) "The file name provided $file_name doe not exist."
-#     db = getdb()
-#     df0 = DBInterface.execute(db, "select * from students;") |> DataFrame
-#     df = if nrow(df0) > 0
-#         load_students(df)
-#         df
-#     else
-#     end
-#     SQLite.close(db)
-#     df
-# end
-
-function savescores(grade_name::String, filename::String)
-    df = get_scores(grade_name)
-    savecsv(df, filename)
-    df
+    map(x -> Grade(x[:student_id], x[:course_id], x[:grade_name], x[:grade_value], x[:grade_max]), eachrow(df))
 end
 
 
-function get_scores(grade_name)
-    db = getdb()
-    df = DBInterface.execute(
-        db,
-        """
-    select 
-        t1.*,t2.*,t3.* 
-    from 
-        student_grades t1 
-    inner join 
-        students t2 on t1.student_id=t2.id 
-    inner join 
-        courses t3 on t1.course_id = t3.id
-    where 
-        grade_name='$grade_name' 
-    order by t3.section, t2.id;
-"""
-    ) |> DataFrame
+
+function reset_db()
+    db = getdb(true)
     SQLite.close(db)
-    df
 end
 
 function getdb(reset_db=false)
@@ -171,18 +129,24 @@ function getdb(reset_db=false)
     DBInterface.execute(db, creat_reg_table_sql)
     create_scores_table_sql = """
     CREATE TABLE IF NOT EXISTS student_grades (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER,
         course_id INTEGER,
         grade_name TEXT,
         grade_value REAL,
         grade_max REAL,
-        UNIQUE(student_id,course_id,grade_name)
+        PRIMARY KEY(student_id,course_id,grade_name)
     );
     """
     # Execute the SQL statement
     DBInterface.execute(db, create_scores_table_sql)
     db
+end
+
+
+function savescores(grade_name::String, filename::String)
+    df = get_scores(grade_name)
+    savecsv(df, filename)
+    df
 end
 
 function savecsv(df::DataFrame, filename::String; args...)

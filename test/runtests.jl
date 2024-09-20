@@ -30,42 +30,54 @@ using Test
     @test course4.term == "241" && course4.section == "31"
     @test course5.term == "241" && course5.section == "31"
     @test course6.term == "241" && course6.section == "31"
+    @test course1.id == "new"
+    @test course1.students == []
 
     course1_with_id = createCourse("241", "math 208", "Differential Equations and Linear Algebra", "F31")
     course2_with_id = createCourse("241", "math 208", "Differential Equations and Linear Algebra", "F32")
     course3_with_id = createCourse("241", "math208", "Differential Equations and Linear Algebra", "F31")
-    @test course1_with_id.course_id != course2_with_id.course_id
-    @test course1_with_id.course_id == course3_with_id.course_id
+    @test course1_with_id.id != course2_with_id.id
+    @test course1_with_id.id == course3_with_id.id
     @test length(course1_with_id.students) == 0
 
 
     students_courses = addStudents(course1, csv_file_path;
         fields=Dict(:id => "external_id", :name => ("first_name", x -> uppercasefirst(x)), :email => ("external_id", x -> "s$(x)@kfupm.edu.sa"))
     )
-    @test students_courses.course_id == course1_with_id.course_id
+    @test students_courses.id == course1_with_id.id
     @test isa(students_courses.students, Vector{Student})
     @test length(students_courses.students) > 0
 
     math557_course = createCourse("241", "MATH557", "Applied Linear Algebra", 1)
-    math557_students = addStudents(math557_course.course, xlsx_file_path, "Class List Summary";
+    math557_students = addStudents(math557_course, xlsx_file_path, "Class List Summary";
         first_row=15, fields=Dict(:id => "ID", :name => "Student Name", :email => ("ID", x -> "g$(x)@kfupm.edu.sa"))
     )
     @test length(math557_students.students) > 0
 
-    # student_id = 202408140
-    # student = Student(student_id)
-    # @test isa(student, Student)
-    # @test student.name == "Joud"
+    @test isa(ids(math557_students), Vector{Int})
+    @test isa(names(math557_students), Vector{String})
+    @test isa(emails(math557_students), Vector{String})
 
-    # course = Course("MATH208", "141", "F31")
-    # @test isa(course, Course)
-    # @test length(course.students) == 26
-    # @test course.term == "141"
+    @test length(ids(course1)) == 0
+    @test length(names(course1)) == 0
+    @test length(emails(course1)) == 0
 
-
-    # grades_grade_scope_file = "data/gradescope.csv"
-    # grades = Grade("MATH208", "141", "F31", "Class Test 1", grades_grade_scope_file
-    #     ; mapping=Dict(:student_id => "SID", :value => "Total Score", :max_value => "Max Points"))
-    # @test isa(grades, Vector{Grade})
-
+    s = Student(201120940, "Mohammed Alshahrani", "mshahrani@kfupm.edu.sa")
+    # println(math557_students)
+    # println(course1)
+    grades_grade_scope_file = "data/gradescope.csv"
+    math377 = createCourse(233, "MATH 377", "Numerical Computation", 1)
+    math377 = addStudents(math377, grades_grade_scope_file;
+        fields=Dict(:id => "SID", :name => "Name", :email => "Email")
+    )
+    math377 = addGrades(math377, grades_grade_scope_file,
+        fields=Dict(
+            :sid => "SID",
+            :name => ("SID", _ -> "class_test_1"),
+            :value => "Total Score",
+            :max_value => "Max Points",
+        )
+    )
+    math377_grades = getGrades(math377)
+    @test isa(math377_grades, Vector{Grade})
 end
