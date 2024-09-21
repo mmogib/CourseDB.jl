@@ -14,6 +14,7 @@ file_data = FileData("students.csv", Dict("id" => "number", "name" => "string"),
 println(file_data.path)    # Prints the file path
 println(file_data.fields)  # Prints the fields dictionary
 println(file_data.data)    # Prints the DataFrame
+```
 """
 struct FileData
     path::String
@@ -37,6 +38,7 @@ student = Student(12345, "John Doe", "johndoe@example.com")
 println(student.id)    # Prints the student ID
 println(student.name)  # Prints the student name
 println(student.email) # Prints the student email
+```
 """
 struct Student
     id::Int
@@ -82,6 +84,7 @@ A structure representing a course, with multiple constructors for creating `Cour
 course = Course(241, "MATH 371", "Introduction to Numerical Computing", 1)
 println(course.code)  # Prints "MATH371"
 println(course.id)    # Prints "new"
+```
 """
 struct Course
     id::Union{String,Int}
@@ -135,6 +138,7 @@ A structure representing the grade of a student in a specific course.
 grade = Grade(12345, 1, "Midterm Exam", 85.5, 100.0)
 println(grade.student_id)   # Prints the student ID
 println(grade.value)        # Prints the grade value
+```
 """
 struct Grade
     student_id::Int

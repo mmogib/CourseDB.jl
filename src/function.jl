@@ -22,6 +22,7 @@ Reads data from a file and returns a `FileData` object, which includes the file 
 file_data = readdata("data.csv", delim=',', header=true)
 println(file_data.fields)  # Dict with column names and their types
 println(file_data.data)    # DataFrame with the file content
+```
 """
 function readdata(filepath::String, args...; kwargs...)::FileData
     @assert isfile(filepath) "The file $filepath does not exist."
@@ -61,6 +62,7 @@ Creates a `Course` object and populates it with students by fetching data from a
 ```julia
 course = createCourse("241", "MATH 371", "Introduction to Numerical Computing", 1)
 println(course.students)  # Prints the list of students enrolled
+```
 """
 function createCourse(term::Union{Integer,String}, code::String, name::String, section::Union{Integer,String})
     course = Course(term, code, name, section)
@@ -94,6 +96,7 @@ Adds students to a `Course` object by reading data from a file and creating `Stu
 course = Course("241", "MATH 371", "Introduction to Numerical Computing", 1)
 updated_course = addStudents(course, "students.csv", delim=',', header=true)
 println(updated_course.students)  # Prints the list of added students
+```
 """
 function addStudents(c::Course, file_path::String, args...; fields::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:id => "id", :name => "name", :email => "email"), kwargs...)
     dfile = readdata(file_path, args...; kwargs...)
@@ -138,6 +141,7 @@ Retrieves the IDs of students enrolled in a given `Course`.
 course = createCourse(241, "MATH 371", "Introduction to Numerical Computing", 1)
 student_ids = ids(course)
 println(student_ids)  # Prints a vector of student IDs
+```
 """
 
 function ids(c::Course)
@@ -165,6 +169,7 @@ Retrieves the names of students enrolled in a given `Course`.
 course = createCourse(241, "MATH 371", "Introduction to Numerical Computing", 1)
 student_names = names(course)
 println(student_names)  # Prints a vector of student names
+```
 """
 function names(c::Course)
     students = c.students
@@ -191,6 +196,7 @@ Retrieves the email addresses of students enrolled in a given `Course`.
 course = createCourse(241, "MATH 371", "Introduction to Numerical Computing", 1)
 student_emails = emails(course)
 println(student_emails)  # Prints a vector of student email addresses
+```
 """
 function emails(c::Course)
     students = c.students
@@ -230,6 +236,7 @@ Adds student grades to a `Course` object by reading grade data from a file and c
 course = createCourse(241, "MATH 371", "Introduction to Numerical Computing", 1)
 updated_course = addGrades(course, "grades.csv", delim=',', header=true)
 println(updated_course.students)  # Prints the course with students and their grades
+```
 """
 function addGrades(c::Course, file_path::String, args...;
     fields::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:sid => "sid", :name => "name", :value => "value", :max_value => "max_value"), kwargs...)
@@ -292,6 +299,7 @@ if grades !== nothing
 else
     println("No grades available for a new course.")
 end
+```
 """
 function getGrades(c::Course)
     if c.id == "new"
