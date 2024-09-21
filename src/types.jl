@@ -1,9 +1,43 @@
+"""
+    FileData(path::String, fields::Dict{String, String}, data::DataFrame)
+
+A structure representing data loaded from a file, along with metadata about its fields.
+
+# Fields
+- `path::String`: The file path from which the data was read.
+- `fields::Dict{String, String}`: A dictionary mapping column names to their data types. The keys are the column names (as strings), and the values are either `"number"` or `"string"`, indicating the type of data in each column.
+- `data::DataFrame`: The actual data loaded from the file, stored as a `DataFrame`.
+
+# Example
+```julia
+file_data = FileData("students.csv", Dict("id" => "number", "name" => "string"), DataFrame())
+println(file_data.path)    # Prints the file path
+println(file_data.fields)  # Prints the fields dictionary
+println(file_data.data)    # Prints the DataFrame
+"""
 struct FileData
     path::String
     fields::Dict{String,String}
     data::DataFrame
 end
 
+"""
+    Student(id::Int, name::String, email::String)
+
+A structure representing a student with their basic details.
+
+# Fields
+- `id::Int`: The student's unique identifier, typically a numeric value.
+- `name::String`: The student's full name.
+- `email::String`: The student's email address.
+
+# Example
+```julia
+student = Student(12345, "John Doe", "johndoe@example.com")
+println(student.id)    # Prints the student ID
+println(student.name)  # Prints the student name
+println(student.email) # Prints the student email
+"""
 struct Student
     id::Int
     name::String
@@ -22,6 +56,33 @@ Base.show(io::IO, ss::Vector{Student}) = begin
     end
 end
 
+"""
+    Course
+
+A structure representing a course, with multiple constructors for creating `Course` objects in various formats.
+
+# Fields
+- `id::Union{String, Int}`: A unique identifier for the course, which can either be a string (default is `"new"`) or an integer (after the course is created in the database).
+- `term::String`: The academic term in which the course is offered, represented as a string (e.g., `"241"`).
+- `code::String`: The course code (e.g., `"MATH371"`) with spaces removed and converted to uppercase.
+- `name::String`: The full name of the course (e.g., `"Introduction to Numerical Computing"`).
+- `section::String`: The section number of the course, represented as a string.
+- `students::Vector{Student}`: A list (vector) of students enrolled in the course.
+
+# Constructors
+- `Course(term::String, code::String, name::String, section::String)`: Creates a new `Course` with the term, code, name, and section as strings, initializing `id` to `"new"` and `students` to an empty array.
+- `Course(term::Integer, code::String, name::String, section::Integer)`: Creates a new `Course` with an integer term and section, with the code converted to uppercase and spaces removed.
+- `Course(term::Integer, code::String, name::String, section::String)`: Creates a new `Course` with an integer term, string section, and processes the course code similarly.
+- `Course(term::String, code::String, name::String, section::Integer)`: Creates a `Course` with a string term and an integer section.
+- `Course(c::Course, id::Int)`: Creates a new `Course` with an updated ID while retaining all other attributes of the existing `Course` object.
+- `Course(c::Course, students::Vector{Student})`: Creates a new `Course` by updating the list of students, while keeping all other course information the same.
+
+# Example
+```julia
+course = Course(241, "MATH 371", "Introduction to Numerical Computing", 1)
+println(course.code)  # Prints "MATH371"
+println(course.id)    # Prints "new"
+"""
 struct Course
     id::Union{String,Int}
     term::String
@@ -57,6 +118,24 @@ Base.show(io::IO, c::Course) = begin
 
 end
 
+"""
+    Grade
+
+A structure representing the grade of a student in a specific course.
+
+# Fields
+- `student_id::Int`: The unique identifier of the student to whom the grade belongs.
+- `course_id::Int`: The unique identifier of the course in which the student is enrolled.
+- `name::String`: The name of the assessment or assignment for which the grade is awarded.
+- `value::Float64`: The actual grade value received by the student.
+- `max_value::Float64`: The maximum possible grade value for the assessment.
+
+# Example
+```julia
+grade = Grade(12345, 1, "Midterm Exam", 85.5, 100.0)
+println(grade.student_id)   # Prints the student ID
+println(grade.value)        # Prints the grade value
+"""
 struct Grade
     student_id::Int
     course_id::Int
