@@ -123,9 +123,9 @@ function get_course_grades(c::Course, grade_name::String)
         from 
             student_grades
         where 
-            course_id=? and grade_name='?'
+            course_id=? and grade_name='$(grade_name)'
     """
-    df = DBInterface.execute(db, sql, [c.id, grade_name]) |> DataFrame
+    df = DBInterface.execute(db, sql, [c.id]) |> DataFrame
     SQLite.close(db)
     students = get_course_students(c.id)
     f(id, fld) = begin

@@ -79,8 +79,9 @@ using Test
         )
     )
     math377_grades = getGrades(math377)
-    # println(math377_grades)
-    @test isa(math377_grades, Vector{Grade})
+    math377_grades_with_name = getGrades(math377, "class_test_1")
+    # println(math377_grades_with_name)
+    @test isa(math377_grades, Vector{Grade}) && isa(math377_grades_with_name, Vector{Grade})
     math377_students = math377.students
     st_df = DataFrame(math377_students)
     @test isa(st_df, DataFrame) && nrow(st_df) == length(math377_students)

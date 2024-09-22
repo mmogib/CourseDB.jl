@@ -403,4 +403,12 @@ function getGrades(c::Course)
     end
 end
 
+function getGrades(c::Course, grade_name::String)
+    if c.id == "new"
+        nothing
+    else
+        get_course_grades(c, grade_name)
+    end
+end
+
 export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades, writedata
