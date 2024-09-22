@@ -157,7 +157,7 @@ struct Grade
     value::Float64
     max_value::Float64
 end
-Base.show(io::IO, g::Grade) = print(io, "Student ID:\t\t $(g.student_id)\nCourse Name:\t\t $(g.course_code) | $(course_name)\nGrade Name:\t\t $(g.name)\nGrade Value:\t\t $(g.value) (/$(g.max_value))")
+Base.show(io::IO, g::Grade) = print(io, "Student ID:\t\t $(g.student_id)\nCourse Name:\t\t $(g.course_code) | $(g.course_name)\nGrade Name:\t\t $(g.name)\nGrade Value:\t\t $(g.value) (/$(g.max_value))")
 Base.show(io::IO, gs::Vector{Grade}) = begin
     if length(gs) == 0
         print(io, "No grades ...")
