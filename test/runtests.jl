@@ -79,5 +79,39 @@ using Test
         )
     )
     math377_grades = getGrades(math377)
+    # println(math377_grades)
     @test isa(math377_grades, Vector{Grade})
+    math377_students = math377.students
+    st_df = DataFrame(math377_students)
+    @test isa(st_df, DataFrame) && nrow(st_df) == length(math377_students)
+
+    filepath = "export/students.csv"
+    result = writedata(filepath, math377_students; quotestrings=true)
+    @test length(result.data) == length(math377_students)
+
+    filepath = "export/students.txt"
+    result = writedata(filepath, math377_students; quotestrings=true)
+    @test length(result.data) == length(math377_students)
+
+    filepath = "export/students.xlsx"
+    result = writedata(filepath, math377_students; sheetname="students", overwrite=true)
+    @test length(result.data) == length(math377_students)
+
+
+    filepath = "export/grades.csv"
+    result = writedata(filepath, math377_grades; quotestrings=true)
+    @test length(result.data) == length(math377_grades)
+
+    filepath = "export/grades.txt"
+    result = writedata(filepath, math377_grades; quotestrings=true)
+    @test length(result.data) == length(math377_grades)
+
+    filepath = "export/grades.xlsx"
+    result = writedata(filepath, math377_grades; sheetname="grades", overwrite=true)
+    @test length(result.data) == length(math377_grades)
+
+
+    # filepath = "export/students.csv"
+    # result = writedata(filepath, math377_students)
+    # @test length(result.data) == length(math377_students)
 end

@@ -42,6 +42,85 @@ function readdata(filepath::String, args...; kwargs...)::FileData
     FileData(filepath, fields, data)
 end
 
+
+function savecsv(df::DataFrame, filepath::String; args...)
+    folder = dirname(filepath)
+    file_base = basename(filepath)
+    file_path = mkpath(folder)
+    CSV.write("$file_path/$file_base", eachrow(df); args...)
+end
+
+"""
+    writedata(filepath::String, students::Vector{Student}, args...; kwargs...) -> Result
+    writedata(filepath::String, grades::Vector{Grade}, args...; kwargs...) -> Result
+
+Writes data to a specified file in tabular format using either `XLSX.writetable` for `.xlsx` files or `CSV.write` for `.csv` files. The input data can either be a vector of `Student` objects or a vector of `Grade` objects.
+
+# Arguments
+- `filepath::String`: The path of the file where the data will be written. The file extension determines whether the data is written in CSV or XLSX format:
+    - `.csv` files are written using `CSV.write`.
+    - `.xlsx` files are written using `XLSX.writetable`.
+- `students::Vector{Student}`: A vector of `Student` objects to be written to the file (used in the first method).
+- `grades::Vector{Grade}`: A vector of `Grade` objects to be written to the file (used in the second method).
+- `args...`: Additional positional arguments passed to the underlying write operation.
+- `kwargs...`: Optional keyword arguments passed to the underlying write operation.
+
+# Returns
+- `Result`: A `Result` object containing the data that was written (`Vector{Student}` or `Vector{Grade}`) and a message describing the outcome.
+
+# Methods
+- `writedata(filepath::String, students::Vector{Student}, args...; kwargs...)`: Converts the student data to a `DataFrame` with columns `id`, `name`, and `email`, and writes it to a `.csv` or `.xlsx` file using `CSV.write` or `XLSX.writetable`, respectively.
+- `writedata(filepath::String, grades::Vector{Grade}, args...; kwargs...)`: Converts the grade data to a `DataFrame` with columns `student_id`, `student_name`, `student_email`, `course_code`, `course_name`, `grade`, `value`, and `max_value`, and writes it to a `.csv` or `.xlsx` file using `CSV.write` or `XLSX.writetable`, respectively.
+
+# Example
+```julia
+students = [Student(123, "John Doe", "john@example.com"), Student(456, "Jane Doe", "jane@example.com")]
+res = writedata("students.csv", students)
+println(res.message)  # Prints the result message after writing the data using CSV.write
+
+grades = [Grade(123, "John Doe", "john@example.com", 1, "MATH371", "Numerical Computing", "Midterm", 85.0, 100.0)]
+res = writedata("grades.xlsx", grades)
+println(res.message)  # Prints the result message after writing the data using XLSX.writetable
+```
+"""
+function writedata(filepath::String, students::Vector{Student}, args...; kwargs...)
+    df = DataFrame(id=map(x -> x.id, students), name=map(x -> x.name, students), email=map(x -> x.email, students))
+    res = writedata(filepath, df, args...; kwargs...)
+    Result(students, res.message)
+end
+
+function writedata(filepath::String, grades::Vector{Grade}, args...; kwargs...)
+    df = DataFrame(
+        student_id=map(x -> x.student_id, grades),
+        student_name=map(x -> x.student_name, grades),
+        student_email=map(x -> x.student_email, grades),
+        course_code=map(x -> x.course_code, grades),
+        course_name=map(x -> x.course_name, grades),
+        grade=map(x -> x.name, grades),
+        value=map(x -> x.value, grades),
+        max_value=map(x -> x.max_value, grades),
+    )
+    res = writedata(filepath, df, args...; kwargs...)
+    Result(grades, res.message)
+end
+function writedata(filepath::String, df::DataFrame, args...; kwargs...)
+    kind = basename(filepath) |> d -> split(d, ".") |> d -> d[end]
+    @assert kind in ["csv", "xlsx", "txt"] "The file extension $kind is not supported."
+    folder = dirname(filepath)
+    file_base = basename(filepath)
+    file_path = mkpath(folder)
+    try
+        if kind in ["csv", "txt"]
+            CSV.write("$file_path/$file_base", eachrow(df), args...; kwargs...)
+        else
+            XLSX.writetable(filepath, df, args...; kwargs...)
+        end
+    catch e
+        return Result(nothing, typeof(e))
+    end
+    return Result(df, "Successfully saved students")
+end
+
 """
     createCourse(term::Union{Integer, String}, code::String, name::String, section::Union{Integer, String})::Course
 
@@ -207,6 +286,8 @@ function emails(c::Course)
     end
 end
 
+
+
 """
     addGrades(c::Course, file_path::String, args...;
         fields::Union{Dict{Symbol, String}, Dict{Symbol, Any}}=Dict(:sid => "sid", :name => "name", :value => "value", :max_value => "max_value"), kwargs...)
@@ -242,35 +323,48 @@ function addGrades(c::Course, file_path::String, args...;
     fields::Union{Dict{Symbol,String},Dict{Symbol,Any}}=Dict(:sid => "sid", :name => "name", :value => "value", :max_value => "max_value"), kwargs...)
     dfile = readdata(file_path, args...; kwargs...)
     df = dfile.data |> dropmissing
-    gids = if isa(fields[:sid], Tuple)
-        tids = map(x -> isa(x, Int) ? x : parse(Int, x), df[!, fields[:sid][1]])
-        map(fields[:sid][2], tids)
-    else
-        map(x -> isa(x, Int) ? x : parse(Int, x), df[!, fields[:sid]])
-    end
-    names = if isa(fields[:name], Tuple)
-        fields[:name][2].(df[!, fields[:name][1]])
-    else
-        df[!, fields[:name]]
-    end
-    values = if isa(fields[:value], Tuple)
-        fields[:value][2].(df[!, fields[:value][1]])
-    else
-        df[!, fields[:value]]
-    end
-    max_values = if isa(fields[:max_value], Tuple)
-        fields[:max_value][2].(df[!, fields[:max_value][1]])
-    else
-        df[!, fields[:max_value]]
+    original_num_students = nrow(df)
+    id_fld, id_fun = isa(fields[:sid], Tuple) ? (fields[:sid][1], fields[:sid][2]) : (fields[:sid], x -> x)
+    name_fld, name_fun = isa(fields[:name], Tuple) ? (fields[:name][1], fields[:name][2]) : (fields[:name], x -> x)
+    value_fld, value_fun = isa(fields[:value], Tuple) ? (fields[:value][1], fields[:value][2]) : (fields[:value], x -> x)
+    max_value_fld, max_value_fun = isa(fields[:max_value], Tuple) ? (fields[:max_value][1], fields[:max_value][2]) : (fields[:max_value], x -> x)
+    df = transform(df, id_fld => ByRow(r -> begin
+            t = id_fun(r)
+            if isa(t, Int)
+                t
+            else
+                parse(Int, t)
+            end
+        end
+        ) => :sid,
+        name_fld => ByRow(name_fun) => :name,
+        value_fld => ByRow(value_fun) => :value,
+        max_value_fld => ByRow(max_value_fun) => :max_value,
+    )
+    gids = df[!, :sid]
+    grades_students = get_student(gids)
+    course = db_course(c)
+    students = get_course_students(course.id)
+    db_students_ids = map(x -> x.id, students)
+    gids = filter(x -> x in db_students_ids, map(y -> y.id, grades_students))
+    df = filter(x -> x[:sid] in gids, df)
+    f(id, fld) = begin
+        s = filter(y -> y.id == id, students)[1]
+        s[fld]
     end
 
-    course_with_id = db_course(c)
-    students = get_course_students(course_with_id.id)
-    course = Course(course_with_id, students)
-    students_ids = ids(course)
-    grades = map(i -> Grade(gids[i], course_with_id.id, names[i], values[i], max_values[i]), 1:length(gids))
-    filtered_grades = filter(x -> x.student_id in students_ids, grades)
-    if length(grades) > length(filtered_grades)
+    grades = map(x -> Grade(
+            x[:sid],
+            f(x[:sid], :name),
+            f(x[:sid], :email),
+            course.id,
+            course.code,
+            course.name,
+            x[:name],
+            x[:value],
+            x[:max_value]
+        ), eachrow(df))
+    if original_num_students > length(grades)
         @warn "Some grades cannot be saved. No corresponding students. Maybe you need to add the missing students first."
     end
     add_student_grades(grades)
@@ -309,5 +403,4 @@ function getGrades(c::Course)
     end
 end
 
-
-export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades
+export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades, writedata

@@ -8,6 +8,18 @@ function db_course(c::Course)
 end
 
 
+function get_course(id::Int; with_students::Bool=false)
+    db = getdb()
+    df = DBInterface.execute(db, "select * from courses where id=?", [id]) |> DataFrame
+    SQLite.close(db)
+    students = if with_students
+        get_course_students(id)
+    else
+        []
+    end
+    Course(id, df[!, :term], df[!, :code][1], df[!, :name][1], df[!, :section][1], students)
+end
+
 function add_students(students::Vector{Student})
     db = getdb()
     values = join(map(x -> "($(x.id),'$(x.name)','$(x.email)')", students), ",")
@@ -41,12 +53,19 @@ function save_students(c::Course)
     get_course_students(c.id)
 end
 
-
 function get_student(id::Int)
     db = getdb()
     df = DBInterface.execute(db, "select * from students where id=?", [id]) |> DataFrame
     SQLite.close(db)
-    df
+    Student(id, df[!, :name][1], df[!, :email][1])
+end
+
+function get_student(ids::Vector{Int})
+    in_close = join(ids, ",")
+    db = getdb()
+    df = DBInterface.execute(db, "select * from students where id in ($in_close)") |> DataFrame
+    SQLite.close(db)
+    map(x -> Student(x[:id], x[:name], x[:email]), eachrow(df))
 end
 
 function get_course_students(course_id::Int)
@@ -78,9 +97,53 @@ function get_course_grades(c::Course)
     """
     df = DBInterface.execute(db, sql, [c.id]) |> DataFrame
     SQLite.close(db)
-    map(x -> Grade(x[:student_id], x[:course_id], x[:grade_name], x[:grade_value], x[:grade_max]), eachrow(df))
+    students = get_course_students(c.id)
+    f(id, fld) = begin
+        s = filter(y -> y.id == id, students)[1]
+        s[fld]
+    end
+    map(x -> Grade(
+            x[:student_id],
+            f(x[:student_id], :name),
+            f(x[:student_id], :email),
+            c.id,
+            c.code,
+            c.name,
+            x[:grade_name],
+            x[:grade_value],
+            x[:grade_max]),
+        eachrow(df))
 end
 
+function get_course_grades(c::Course, grade_name::String)
+    db = getdb()
+    sql = """
+        select 
+            * 
+        from 
+            student_grades
+        where 
+            course_id=? and grade_name='?'
+    """
+    df = DBInterface.execute(db, sql, [c.id, grade_name]) |> DataFrame
+    SQLite.close(db)
+    students = get_course_students(c.id)
+    f(id, fld) = begin
+        s = filter(y -> y.id == id, students)[1]
+        s[fld]
+    end
+    map(x -> Grade(
+            x[:student_id],
+            f(x[:student_id], :name),
+            f(x[:student_id], :email),
+            c.id,
+            c.code,
+            c.name,
+            x[:grade_name],
+            x[:grade_value],
+            x[:grade_max]),
+        eachrow(df))
+end
 
 
 function reset_db()
@@ -140,20 +203,6 @@ function getdb(reset_db=false)
     # Execute the SQL statement
     DBInterface.execute(db, create_scores_table_sql)
     db
-end
-
-
-function savescores(grade_name::String, filename::String)
-    df = get_scores(grade_name)
-    savecsv(df, filename)
-    df
-end
-
-function savecsv(df::DataFrame, filename::String; args...)
-    folder = dirname(filename)
-    file_base = basename(filename)
-    file_path = mkpath(folder)
-    CSV.write("$file_path/$file_base", eachrow(df); args...)
 end
 
 

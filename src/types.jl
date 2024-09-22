@@ -57,6 +57,7 @@ Base.show(io::IO, ss::Vector{Student}) = begin
         pretty_table(io, T; header=["ID", "NAME", "EMAIL"], alignment=[:c, :l, :l])
     end
 end
+Base.getindex(s::Student, fld::Symbol) = getfield(s, fld)
 
 """
     Course
@@ -124,42 +125,80 @@ end
 """
     Grade
 
-A structure representing the grade of a student in a specific course.
+A structure representing a detailed record of a student's grade for a specific assessment in a course.
 
 # Fields
-- `student_id::Int`: The unique identifier of the student to whom the grade belongs.
-- `course_id::Int`: The unique identifier of the course in which the student is enrolled.
-- `name::String`: The name of the assessment or assignment for which the grade is awarded.
-- `value::Float64`: The actual grade value received by the student.
-- `max_value::Float64`: The maximum possible grade value for the assessment.
+- `student_id::Int`: The unique identifier of the student.
+- `student_name::String`: The full name of the student.
+- `student_email::String`: The email address of the student.
+- `course_id::Int`: The unique identifier of the course.
+- `course_code::String`: The code of the course (e.g., `"MATH371"`).
+- `course_name::String`: The full name of the course (e.g., `"Introduction to Numerical Computing"`).
+- `name::String`: The name of the assessment or assignment (e.g., `"Midterm Exam"`).
+- `value::Float64`: The grade received by the student for the assessment.
+- `max_value::Float64`: The maximum possible grade for the assessment.
 
 # Example
 ```julia
-grade = Grade(12345, 1, "Midterm Exam", 85.5, 100.0)
-println(grade.student_id)   # Prints the student ID
-println(grade.value)        # Prints the grade value
+grade = Grade(12345, "John Doe", "johndoe@example.com", 1, "MATH371", "Introduction to Numerical Computing", "Final Exam", 90.0, 100.0)
+println(grade.student_name)  # Prints "John Doe"
+println(grade.value)         # Prints 90.0
+
 ```
 """
 struct Grade
     student_id::Int
+    student_name::String
+    student_email::String
     course_id::Int
+    course_code::String
+    course_name::String
     name::String
     value::Float64
     max_value::Float64
 end
-Base.show(io::IO, g::Grade) = print(io, "Student ID:\t\t $(g.student_id)\nCourse ID:\t\t $(g.course_id)\nGrade Name:\t\t $(g.name)\nGrade Value:\t\t $(g.value) (/$(g.max_value))")
+Base.show(io::IO, g::Grade) = print(io, "Student ID:\t\t $(g.student_id)\nCourse Name:\t\t $(g.course_code) | $(course_name)\nGrade Name:\t\t $(g.name)\nGrade Value:\t\t $(g.value) (/$(g.max_value))")
 Base.show(io::IO, gs::Vector{Grade}) = begin
     if length(gs) == 0
         print(io, "No grades ...")
     else
         sids = map(x -> x.student_id, gs)
+        snames = map(x -> x.student_name, gs)
         cids = map(x -> x.course_id, gs)
+        cnames = map(x -> "$(x.course_code) | $(x.course_name)", gs)
         names = map(x -> x.name, gs)
         values = map(x -> x.value, gs)
         max_vals = map(x -> x.max_value, gs)
-        T = stack([sids, cids, names, values])
-        pretty_table(io, T; header=(["Student ID", "Course ID", "Grade", "Value"], ["", "", "", "out of $(max_vals[1])"]), alignment=[:c, :l, :l, :l])
+        T = stack([sids, snames, cids, cnames, names, values])
+        pretty_table(io, T;
+            header=(["Student ID", "Student Name", "Course ID", "Course Name", "Grade", "Value"],
+                ["", "", "", "", "", "out of $(max_vals[1])"]),
+            alignment=[:c, :l, :l, :l, :l, :l])
     end
 end
+"""
+    Result
 
-export FileData, Student, Course, Grade
+A structure used to represent the outcome of an operation, which can include data and a corresponding message.
+
+# Fields
+- `data::Union{Nothing, Vector{Student}, Vector{Grade}, DataFrame}`: The result of an operation. This field can contain:
+    - `Nothing`: If no data is available or the operation failed.
+    - `Vector{Student}`: A list of `Student` objects, typically representing enrolled students.
+    - `Vector{Grade}`: A list of `Grade` objects, typically representing grades assigned to students.
+    - `DataFrame`: A `DataFrame` containing tabular data, such as a dataset from an external source (e.g., a file).
+- `message::String`: A descriptive message accompanying the result, which may provide feedback on the operation (e.g., success or error messages).
+
+# Example
+```julia
+result = Result(Vector{Student}(), "Operation successful")
+println(result.message)  # Prints "Operation successful"
+println(result.data)     # Prints an empty vector of students
+```
+"""
+struct Result
+    data::Union{Nothing,Vector{Student},Vector{Grade},DataFrame}
+    message::String
+end
+
+export FileData, Student, Course, Grade, Result
