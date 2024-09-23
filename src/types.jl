@@ -45,7 +45,7 @@ struct Student
     name::String
     email::String
 end
-Base.show(io::IO, s::Student) = print(io, "ID:\t\t $(s.id)\nName:\t\t $(s.name)\nEMAIL:\t\t $(s.email)")
+Base.show(io::IO, s::Student) = print(io, "$(s.id)\t\t$(s.name)\t\t$(s.email)")
 Base.show(io::IO, ss::Vector{Student}) = begin
     if length(ss) == 0
         print(io, "No students ...")
@@ -94,6 +94,9 @@ struct Course
     name::String
     section::String
     students::Vector{Student}
+    function Course(id::Int, t::String, c::String, n::String, s::String, ss::Vector{Student})
+        new(id, t, c, n, s, ss)
+    end
     function Course(t::String, c::String, name::String, sec::String)
         code = replace(c, " " => "") |> uppercase
         new("new", t, code, name, sec, [])
@@ -118,10 +121,25 @@ struct Course
     end
 end
 Base.show(io::IO, c::Course) = begin
-    print(io, "TERM:\t $(c.term)\nCode:\t $(c.code)\nNAME:\t $(c.name)\nSECTION:\t $(c.section)\nSTUDENTS:\n$(c.students)")
+    print(io, "$(c.term)\t\t$(c.code)\t\t$(c.name)\t\t$(c.section)\t\t$(c.students)")
 
 end
-
+Base.show(io::IO, cs::Vector{Course}) = begin
+    if length(cs) == 0
+        print(io, "No courses ...")
+    else
+        ids = map(x -> x.id, cs)
+        terms = map(x -> x.term, cs)
+        codes = map(x -> x.code, cs)
+        names = map(x -> x.name, cs)
+        sections = map(x -> x.section, cs)
+        students = length(map(x -> x.students, cs))
+        T = stack([ids, terms, codes, names, sections, students])
+        header = ["ID", "TERM", "CODE", "NAME", "SECTION", "No of STUDENTS"]
+        als = [:c, :c, :c, :l, :c, :c]
+        pretty_table(io, T; header=header, alignment=als)
+    end
+end
 """
     Grade
 
@@ -157,7 +175,7 @@ struct Grade
     value::Float64
     max_value::Float64
 end
-Base.show(io::IO, g::Grade) = print(io, "Student ID:\t\t $(g.student_id)\nCourse Name:\t\t $(g.course_code) | $(g.course_name)\nGrade Name:\t\t $(g.name)\nGrade Value:\t\t $(g.value) (/$(g.max_value))")
+Base.show(io::IO, g::Grade) = print(io, "$(g.student_id)\t\t$(g.course_code)|$(g.course_name)\t\t$(g.name)\t\t $(g.value) (/$(g.max_value))")
 Base.show(io::IO, gs::Vector{Grade}) = begin
     if length(gs) == 0
         print(io, "No grades ...")

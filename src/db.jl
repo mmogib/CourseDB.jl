@@ -19,6 +19,29 @@ function get_course(id::Int; with_students::Bool=false)
     end
     Course(id, df[!, :term], df[!, :code][1], df[!, :name][1], df[!, :section][1], students)
 end
+function get_course(df)
+    map(eachrow(df)) do r
+        students = get_course_students(r[:id])
+        Course(r[:id], r[:term], r[:code], r[:name], r[:section], students)
+    end
+end
+function get_course(t::String)
+    db = getdb()
+    df = DBInterface.execute(db, "select * from courses where term='$t'") |> DataFrame
+    SQLite.close(db)
+    courses = get_course(df)
+    courses
+end
+
+function get_course()
+    db = getdb()
+    df = DBInterface.execute(db, "select * from courses") |> DataFrame
+    SQLite.close(db)
+    courses = get_course(df)
+    courses
+end
+
+
 
 function add_students(students::Vector{Student})
     db = getdb()

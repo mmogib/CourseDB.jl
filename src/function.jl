@@ -410,5 +410,60 @@ function getGrades(c::Course, grade_name::String)
         get_course_grades(c, grade_name)
     end
 end
+"""
+    gradesnames(c::Course) -> Vector{String}
 
-export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades, writedata
+Retrieves a unique list of grade names (e.g., assignment or exam names) for a given course.
+
+# Arguments
+- `c::Course`: The course for which the grade names are to be retrieved.
+
+# Returns
+- `Vector{String}`: A vector containing the unique names of the assessments or assignments (e.g.,`"Quiz1"`, `"MidtermExam"`, `"FinalProject"`) for the course.
+
+# Example
+```julia
+course = createCourse(241, "MATH 371", "Introduction to Numerical Computing", 1)
+grade_names = gradsnames(course)
+println(grade_names)  # Example output: ["Quiz1", "Midterm", "FinalExam"]
+```
+"""
+function gradesnames(c::Course)
+    grades_names = getGrades(c) |> g -> map(x -> x.name, g) |> unique
+    grades_names
+end
+
+"""
+    courses(term::Union{Int,String}) -> Vector{Course}
+    courses() -> Vector{Course}
+
+Retrieves a list of courses. The function can either return courses for a specific term or return all courses.
+
+# Methods
+- `courses(term::Union{Int,String})`: Returns courses for a specific term.
+- `courses()`: Returns all courses, regardless of the term.
+
+# Arguments
+- `term::Union{Int,String}`: The term for which courses should be retrieved. If an `Int` is provided, it is converted to a string (e.g., `241` becomes `"241"`). A `String` term can also be passed directly.
+
+# Returns
+- `Vector{Course}`: A vector containing `Course` objects. Each object represents a course in the system.
+
+# Example
+```julia
+courses_for_term = courses(241)  # Retrieves courses for the term "241"
+all_courses = courses()  # Retrieves all courses
+```
+"""
+function courses(term::Union{Int,String})
+    t = isa(term, Int) ? "$term" : term
+    cs = get_course(t)
+    cs
+end
+
+function courses()
+    cs = get_course()
+    cs
+end
+
+export readdata, createCourse, addStudents, ids, names, emails, addGrades, getGrades, writedata, gradesnames, courses

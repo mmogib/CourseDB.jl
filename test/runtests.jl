@@ -111,8 +111,38 @@ using Test
     result = writedata(filepath, math377_grades; sheetname="grades", overwrite=true)
     @test length(result.data) == length(math377_grades)
 
+    c = createCourse(233, "MATH 377", "Numerical Computation", 1)
+    c = addGrades(c, grades_grade_scope_file,
+        fields=Dict(
+            :sid => "SID",
+            :name => ("SID", _ -> "qz1"),
+            :value => "Total Score",
+            :max_value => "Max Points",
+        )
+    )
+    c = addGrades(c, grades_grade_scope_file,
+        fields=Dict(
+            :sid => "SID",
+            :name => ("SID", _ -> "qz2"),
+            :value => "Total Score",
+            :max_value => "Max Points",
+        )
+    )
+    c = addGrades(c, grades_grade_scope_file,
+        fields=Dict(
+            :sid => "SID",
+            :name => ("SID", _ -> "qz3"),
+            :value => "Total Score",
+            :max_value => "Max Points",
+        )
+    )
+    g_names = gradesnames(c)
 
-    # filepath = "export/students.csv"
-    # result = writedata(filepath, math377_students)
-    # @test length(result.data) == length(math377_students)
+    @test length(g_names) == 4
+
+    cs = courses(241)
+    @test length(cs) == 3
+
+    cs = courses()
+    @test length(cs) == 4
 end

@@ -1,7 +1,7 @@
 name = "KFUPMCourseDB"
 uuid = "239a9bc0-2518-4d67-ae60-5e41fb81336c"
 authors = ["Mohammed Alshahrani <mmogib@gmail.com> and contributors"]
-version = "1.0.2-DEV"
+version = "1.1.0-alpha"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -11,7 +11,7 @@ SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
-julia = "1.6.7"
+julia = "^1.6.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
