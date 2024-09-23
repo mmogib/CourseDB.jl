@@ -1,7 +1,7 @@
 name = "KFUPMCourseDB"
 uuid = "239a9bc0-2518-4d67-ae60-5e41fb81336c"
 authors = ["Mohammed Alshahrani <mmogib@gmail.com> and contributors"]
-version = "1.1.0-alpha"
+version = "1.1.1-alpha"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
