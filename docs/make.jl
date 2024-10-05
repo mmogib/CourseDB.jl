@@ -1,14 +1,14 @@
-using KFUPMCourseDB
+using CourseDB
 using Documenter
 
-DocMeta.setdocmeta!(KFUPMCourseDB, :DocTestSetup, :(using KFUPMCourseDB); recursive=true)
+DocMeta.setdocmeta!(CourseDB, :DocTestSetup, :(using CourseDB); recursive=true)
 
 makedocs(;
-    modules=[KFUPMCourseDB],
+    modules=[CourseDB],
     authors="Mohammed Alshahrani <mmogib@gmail.com> and contributors",
-    sitename="KFUPMCourseDB.jl",
+    sitename="CourseDB.jl",
     format=Documenter.HTML(;
-        canonical="https://mmogib.github.io/KFUPMCourseDB.jl",
+        canonical="https://mmogib.github.io/CourseDB.jl",
         edit_link="master",
         assets=String[],
     ),
@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/mmogib/KFUPMCourseDB.jl",
+    repo="github.com/mmogib/CourseDB.jl",
     devbranch="master",
 )

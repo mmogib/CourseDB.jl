@@ -1,8 +1,8 @@
-using KFUPMCourseDB
+using CourseDB
 using DataFrames
 using Test
 
-@testset "KFUPMCourseDB.jl" begin
+@testset "CourseDB.jl" begin
     reset_db()
     csv_file_path = "data/dfile.csv"
     csv_data = readdata(csv_file_path)

@@ -69,6 +69,6 @@ jobs:
         shell: julia --project=docs --color=yes {0}
         run: |
           using Documenter: DocMeta, doctest
-          using KFUPMCourseDB
-          DocMeta.setdocmeta!(KFUPMCourseDB, :DocTestSetup, :(using KFUPMCourseDB); recursive=true)
-          doctest(KFUPMCourseDB)
+          using CourseDB
+          DocMeta.setdocmeta!(CourseDB, :DocTestSetup, :(using CourseDB); recursive=true)
+          doctest(CourseDB)

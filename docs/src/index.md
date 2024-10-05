@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = KFUPMCourseDB
+CurrentModule = CourseDB
 ```
 
-# KFUPMCourseDB
+# CourseDB
 
-Documentation for [KFUPMCourseDB](https://github.com/mmogib/KFUPMCourseDB.jl).
+Documentation for [CourseDB](https://github.com/mmogib/CourseDB.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [KFUPMCourseDB]
+Modules = [CourseDB]
 ```

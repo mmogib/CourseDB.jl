@@ -1,14 +1,14 @@
-# KFUPMCourseDB.jl
+# CourseDB.jl
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mmogib.github.io/KFUPMCourseDB.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mmogib.github.io/KFUPMCourseDB.jl/dev/)
-[![Build Status](https://github.com/mmogib/KFUPMCourseDB.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/mmogib/KFUPMCourseDB.jl/actions/workflows/CI.yml?query=branch%3Amaster)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/mmogib/KFUPMCourseDB.jl?svg=true)](https://ci.appveyor.com/project/mmogib/KFUPMCourseDB-jl)
-
-
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mmogib.github.io/CourseDB.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mmogib.github.io/CourseDB.jl/dev/)
+[![Build Status](https://github.com/mmogib/CourseDB.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/mmogib/CourseDB.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/mmogib/CourseDB.jl?svg=true)](https://ci.appveyor.com/project/mmogib/CourseDB-jl)
 
 
-__KFUPMCourseDB.jl__ is a Julia package designed to manage and manipulate course and student data at KFUPM (King Fahd University of Petroleum and Minerals). This package provides functionality to create and manage courses, students, grades, and related data, with easy file read/write operations for CSV and XLSX formats.
+
+
+__CourseDB.jl__ is a Julia package designed to manage and manipulate course and student data at KFUPM (King Fahd University of Petroleum and Minerals). This package provides functionality to create and manage courses, students, grades, and related data, with easy file read/write operations for CSV and XLSX formats.
 
 ## Features
 
@@ -23,7 +23,7 @@ __KFUPMCourseDB.jl__ is a Julia package designed to manage and manipulate course
 You can install the package from the Julia REPL. Press `]` to enter the package manager, and then run:
 
 ```julia
-pkg> add https://github.com/mmogib/KFUPMCourseDB.jl
+pkg> add https://github.com/mmogib/CourseDB.jl
 ```
 
 ## Usage
@@ -33,7 +33,7 @@ pkg> add https://github.com/mmogib/KFUPMCourseDB.jl
 You can create a course by providing a term, course code, name, and section:
 
 ```julia
-using KFUPMCourseDB
+using CourseDB
 
 course = createCourse(241, "MATH371", "Numerical Computing", 1)
 ```
@@ -75,7 +75,7 @@ grades = getGrades(course)
 
 ### File Operations
 
-KFUPMCourseDB.jl can write data such as students or grades back to files:
+CourseDB.jl can write data such as students or grades back to files:
 
 ```julia
 writedata("output.xlsx", students)
@@ -98,7 +98,7 @@ The package uses the following main data structures:
 Here's a simple workflow for managing a course and its students:
 
 ```julia
-using KFUPMCourseDB
+using CourseDB
 
 # Create a new course
 course = createCourse(241, "MATH371", "Numerical Computing", 1)
@@ -115,7 +115,7 @@ writedata("updated_students.xlsx", course.students)
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests on the [GitHub repository](https://github.com/mmogib/KFUPMCourseDB.jl).
+Contributions are welcome! Feel free to open issues or submit pull requests on the [GitHub repository](https://github.com/mmogib/CourseDB.jl).
 
 ## License
 

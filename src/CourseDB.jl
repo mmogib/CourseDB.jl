@@ -1,4 +1,4 @@
-module KFUPMCourseDB
+module CourseDB
 
 include("deps.jl")
 
