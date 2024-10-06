@@ -3,7 +3,7 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mmogib.github.io/CourseDB.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mmogib.github.io/CourseDB.jl/dev/)
 [![Build Status](https://github.com/mmogib/CourseDB.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/mmogib/CourseDB.jl/actions/workflows/CI.yml?query=branch%3Amaster)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/mmogib/CourseDB.jl?svg=true&)](https://ci.appveyor.com/project/mmogib/CourseDB-jl?branch=master)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/mmogib/CourseDB.jl?svg=true)](https://ci.appveyor.com/project/mmogib/CourseDB-jl?branch=master)
 
 
 
